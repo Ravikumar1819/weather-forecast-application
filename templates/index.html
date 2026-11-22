@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Weather window</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><h1>Weather window</h1><p>Current conditions and the next few days, wherever you are.</p></header><main><div id="message" role="status" class="notice" hidden></div>
+
+<div id="workspace" >
+<section><form id="search"><label>City and optional country code<input id="city" placeholder="Hyderabad,IN" maxlength="100" required></label><label>Units<select id="units"><option value="metric">Celsius / m/s</option><option value="imperial">Fahrenheit / mph</option></select></label><button id="search-button">Check weather</button></form><p class="muted">For precise results, add a country code: London,GB or Paris,FR.</p></section>
+<div id="weather" hidden><section class="weather"><p id="mode" class="notice" hidden></p><h2 id="location"></h2><div id="temperature" class="temperature"></div><p id="conditions"></p><div class="stats"><div>Feels like<strong id="feels"></strong></div><div>Humidity<strong id="humidity"></strong></div><div>Wind<strong id="wind"></strong></div></div><p id="updated" class="muted"></p></section><section><h2>Upcoming days</h2><p class="muted">One reading nearest local noon from each available forecast day.</p><div id="forecast" class="forecast"></div></section></div>
+</div></main><footer>Built by Ravi Kumar. Local development edition.</footer><script src="/static/app.js" defer></script></body></html>
