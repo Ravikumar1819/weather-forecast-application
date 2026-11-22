@@ -1,1 +1,66 @@
-
+name: Publish tested project source
+on:
+  push:
+    paths:
+      - '*.zip'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extract, verify and commit source
+        shell: bash
+        run: |
+          if ! compgen -G '*.zip' > /dev/null; then
+            echo 'Waiting for the source archive upload.'
+            exit 0
+          fi
+          python - <<'PY'
+          import os
+          import zipfile
+          from pathlib import Path, PurePosixPath
+          root = Path.cwd().resolve()
+          name = os.environ['GITHUB_REPOSITORY'].split('/')[1]
+          archive = root / (name + '.zip')
+          with zipfile.ZipFile(archive) as source:
+              for member in source.infolist():
+                  parts = PurePosixPath(member.filename).parts
+                  assert parts[0] == name
+                  if member.is_dir() or len(parts) < 2 or parts[1] == '.github':
+                      continue
+                  target = root.joinpath(*parts[1:]).resolve()
+                  assert target.is_relative_to(root)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(source.read(member))
+          PY
+          python -m pip install -r requirements-dev.txt
+          python -m ruff check .
+          python -m pytest -q
+          if [ -f frontend/package-lock.json ]; then
+            npm --prefix frontend ci
+            npm --prefix frontend run build
+          fi
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          name = os.environ['GITHUB_REPOSITORY'].split('/')[1]
+          Path(name + '.zip').unlink()
+          PY
+          git config user.name 'Ravi Kumar'
+          git config user.email 'Ravikumar1819@users.noreply.github.com'
+          git add --all -- . ':!.github'
+          git commit -m 'Publish verified application source'
+          git push
